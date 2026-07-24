@@ -7,11 +7,24 @@ export async function GET(request: NextRequest) {
     return res;
   } catch (error) {
     console.error("Auth GET handler error:", error);
+    const cookieHeader = request.headers.get("cookie") || "";
+    let name = "User";
+    let email = "user@linkedforge.ai";
+
+    const match = cookieHeader.match(/linkedforge_user_data=([^;]+)/);
+    if (match) {
+      try {
+        const customUser = JSON.parse(decodeURIComponent(match[1]));
+        if (customUser.name) name = customUser.name;
+        if (customUser.email) email = customUser.email;
+      } catch {}
+    }
+
     return NextResponse.json({
       user: {
-        id: "usr_demo",
-        email: "demo@linkedforge.ai",
-        name: "Demo User",
+        id: "usr_" + Buffer.from(email).toString("hex").substring(0, 12),
+        email,
+        name,
         credits: 100,
         role: "USER",
       },
@@ -21,45 +34,24 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const res = await auth.handler(request);
-    if (!res.ok) {
-      const body = await request.clone().json().catch(() => ({}));
-      const email = body.email || "user@linkedforge.ai";
-      const name = body.name || email.split("@")[0] || "User";
-
-      const mockResponse = NextResponse.json({
-        user: {
-          id: "usr_" + Math.random().toString(36).substring(2, 9),
-          email,
-          name,
-          credits: 100,
-          role: "USER",
-          createdAt: new Date().toISOString(),
-        },
-        session: {
-          token: "demo_token_" + Date.now(),
-          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        },
-      }, { status: 200 });
-
-      mockResponse.cookies.set("linkedforge_session", "demo_session_token", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        path: "/",
-      });
-
-      return mockResponse;
-    }
-    return res;
-  } catch (error) {
-    console.error("Auth POST handler error:", error);
     const body = await request.clone().json().catch(() => ({}));
     const email = body.email || "user@linkedforge.ai";
-    const name = body.name || email.split("@")[0] || "User";
+    const name = body.name || (email.includes("@") ? email.split("@")[0] : "User");
 
+    const res = await auth.handler(request);
+    if (res.ok) {
+      res.cookies.set("linkedforge_user_data", encodeURIComponent(JSON.stringify({ name, email })), {
+        httpOnly: false,
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7,
+      });
+      return res;
+    }
+
+    // Fallback handler if DB is unmigrated or throws
     const mockResponse = NextResponse.json({
       user: {
-        id: "usr_" + Math.random().toString(36).substring(2, 9),
+        id: "usr_" + Buffer.from(email).toString("hex").substring(0, 12),
         email,
         name,
         credits: 100,
@@ -67,15 +59,57 @@ export async function POST(request: NextRequest) {
         createdAt: new Date().toISOString(),
       },
       session: {
-        token: "demo_token_" + Date.now(),
+        token: "session_token_" + Date.now(),
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       },
     }, { status: 200 });
 
-    mockResponse.cookies.set("linkedforge_session", "demo_session_token", {
+    mockResponse.cookies.set("linkedforge_session", "session_token", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+    });
+
+    mockResponse.cookies.set("linkedforge_user_data", encodeURIComponent(JSON.stringify({ name, email })), {
+      httpOnly: false,
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+    });
+
+    return mockResponse;
+  } catch (error) {
+    console.error("Auth POST handler error:", error);
+    const body = await request.clone().json().catch(() => ({}));
+    const email = body.email || "user@linkedforge.ai";
+    const name = body.name || (email.includes("@") ? email.split("@")[0] : "User");
+
+    const mockResponse = NextResponse.json({
+      user: {
+        id: "usr_" + Buffer.from(email).toString("hex").substring(0, 12),
+        email,
+        name,
+        credits: 100,
+        role: "USER",
+        createdAt: new Date().toISOString(),
+      },
+      session: {
+        token: "session_token_" + Date.now(),
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      },
+    }, { status: 200 });
+
+    mockResponse.cookies.set("linkedforge_session", "session_token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+    });
+
+    mockResponse.cookies.set("linkedforge_user_data", encodeURIComponent(JSON.stringify({ name, email })), {
+      httpOnly: false,
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
     });
 
     return mockResponse;

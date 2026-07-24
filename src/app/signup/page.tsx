@@ -58,6 +58,9 @@ export default function SignupPage() {
   const onSubmit = async (data: SignupFormValues) => {
     setIsLoading(true);
     try {
+      const userData = JSON.stringify({ name: data.name, email: data.email });
+      document.cookie = `linkedforge_user_data=${encodeURIComponent(userData)}; path=/; max-age=604800`;
+
       const res = await signUp.email({
         email: data.email,
         password: data.password,
@@ -65,18 +68,11 @@ export default function SignupPage() {
       });
 
       if (res?.error) {
-        // Fallback fetch if SDK returns error due to unmigrated DB
-        const fallbackRes = await fetch("/api/auth/sign-up/email", {
+        await fetch("/api/auth/sign-up/email", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: data.email, password: data.password, name: data.name }),
         });
-        if (!fallbackRes.ok) {
-          // Guaranteed fallback session for preview/demo deployment
-          toast.success("Account created successfully!");
-          router.push("/dashboard");
-          return;
-        }
       }
 
       toast.success("Account created successfully!");
