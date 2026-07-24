@@ -24,26 +24,28 @@ This document serves as the **Single Source of Truth** for **LinkedForge AI**. A
 
 ---
 
-## 🔐 Environment Variables (`.env`)
+## 🔐 Environment Variables Reference (`.env`)
+
+> ⚠️ Keep actual secret keys in your private `.env` file (which is git-ignored and never committed).
 
 ```env
 # Live Neon PostgreSQL Database
-DATABASE_URL="postgresql://neondb_owner:npg_3SuPqstJv0Er@ep-wandering-pond-ay2eb1at.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require"
+DATABASE_URL="postgresql://neondb_owner:YOUR_DATABASE_PASSWORD@ep-wandering-pond-ay2eb1at.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require"
 
 # Auth
 NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="linkedforge-ai-super-secret-key-32chars-min"
-BETTER_AUTH_SECRET="linkedforge-ai-super-secret-key-32chars-min"
+NEXTAUTH_SECRET="your-secret-key-at-least-32-chars-long"
+BETTER_AUTH_SECRET="your-better-auth-secret-key-min-32-chars"
 
 # AI Engine (DeepSeek V4 Pro)
-DEEPSEEK_API_KEY="sk-2CTL9UGHUlt8ronqjaApSFIoAQ2fMLtkwaOoBjAea1kr3oxE"
+DEEPSEEK_API_KEY="sk-your-deepseek-key-here"
 DEEPSEEK_BASE_URL="https://api.hcnsec.cn/v1"
 DEEPSEEK_MODEL="DeepSeek-V4-Pro"
 AI_PROVIDER="deepseek"
 
 # Stripe (Billing)
-STRIPE_SECRET_KEY="sk_test_dummy_key_for_dev"
-STRIPE_WEBHOOK_SECRET="whsec_dummy_key_for_dev"
+STRIPE_SECRET_KEY="sk_test_your_stripe_key"
+STRIPE_WEBHOOK_SECRET="whsec_your_stripe_webhook_secret"
 
 # App Public URL
 NEXT_PUBLIC_APP_URL="http://localhost:3000"

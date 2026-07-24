@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
     const provider = process.env.AI_PROVIDER || "deepseek";
     let content = "";
 
-    const apiKey = process.env.DEEPSEEK_API_KEY || "sk-2CTL9UGHUlt8ronqjaApSFIoAQ2fMLtkwaOoBjAea1kr3oxE";
+    const apiKey = process.env.DEEPSEEK_API_KEY;
     const baseURL = process.env.DEEPSEEK_BASE_URL || "https://api.hcnsec.cn/v1";
     const model = process.env.DEEPSEEK_MODEL || "DeepSeek-V4-Pro";
 
