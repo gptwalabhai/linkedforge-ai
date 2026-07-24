@@ -24,7 +24,7 @@ interface GenerateRequest {
 function buildPrompt(req: GenerateRequest): string {
   const { type, topic, tone, framework, audience, readingLevel, emojiLevel, cta, language, brandVoice, writingStyle, industry, length } = req;
 
-  let prompt = `You are an elite LinkedIn content strategist powered by DeepSeek AI. Generate a high-performing LinkedIn ${type} about: ${topic}.\n\n`;
+  let prompt = `You are an elite LinkedIn content strategist powered by DeepSeek V4 Pro. Generate a high-performing LinkedIn ${type} about: ${topic}.\n\n`;
 
   if (brandVoice) prompt += `Brand Voice: ${brandVoice}\n`;
   if (tone) prompt += `Tone: ${tone}\n`;
@@ -61,7 +61,7 @@ function generateDeepSeekFallback(type: string, topic: string, cta?: string): st
       return `📊 Poll: What is your biggest challenge with ${cleanTopic}?\n\nOption A: Lack of strategy & clarity\nOption B: Time & execution constraints\nOption C: Scaling & ROI tracking\nOption D: Finding the right tools\n\n${ctaText}`;
 
     default:
-      return `🚀 The Secret to Mastering ${cleanTopic}\n\nMost professionals struggle with ${cleanTopic} because they focus on short-term tactics instead of sustainable leverage.\n\nHere are 3 core principles to transform your approach:\n\n1. Quality Over Quantity: Focus on high-impact leverage points that move the needle.\n\n2. Consistency & Systems: Build repeatable processes so execution happens effortlessly.\n\n3. Data-Driven Feedback: Iteratively optimize based on real results rather than assumptions.\n\nBottom Line: ${cleanTopic} is not about working harder—it's about building smarter systems.${ctaText}\n\n#${tagTopic || "SaaS"} #Leadership #SaaS #Growth #DeepSeekAI`;
+      return `🚀 The Secret to Mastering ${cleanTopic}\n\nMost professionals struggle with ${cleanTopic} because they focus on short-term tactics instead of sustainable leverage.\n\nHere are 3 core principles to transform your approach:\n\n1. Quality Over Quantity: Focus on high-impact leverage points that move the needle.\n\n2. Consistency & Systems: Build repeatable processes so execution happens effortlessly.\n\n3. Data-Driven Feedback: Iteratively optimize based on real results rather than assumptions.\n\nBottom Line: ${cleanTopic} is not about working harder—it's about building smarter systems.${ctaText}\n\n#${tagTopic || "SaaS"} #Leadership #SaaS #Growth #DeepSeekV4Pro`;
   }
 }
 
@@ -77,21 +77,25 @@ export async function POST(req: NextRequest) {
     const provider = process.env.AI_PROVIDER || "deepseek";
     let content = "";
 
-    if (process.env.DEEPSEEK_API_KEY) {
+    const apiKey = process.env.DEEPSEEK_API_KEY || "sk-2CTL9UGHUlt8ronqjaApSFIoAQ2fMLtkwaOoBjAea1kr3oxE";
+    const baseURL = process.env.DEEPSEEK_BASE_URL || "https://api.hcnsec.cn/v1";
+    const model = process.env.DEEPSEEK_MODEL || "DeepSeek-V4-Pro";
+
+    if (apiKey) {
       try {
         const deepseek = new OpenAI({
-          baseURL: "https://api.deepseek.com",
-          apiKey: process.env.DEEPSEEK_API_KEY,
+          baseURL,
+          apiKey,
         });
         const response = await deepseek.chat.completions.create({
-          model: process.env.DEEPSEEK_MODEL || "deepseek-chat",
+          model,
           messages: [{ role: "user", content: prompt }],
           max_tokens: 1024,
           temperature: 0.7,
         });
         content = response.choices[0].message.content || "";
       } catch (err) {
-        console.warn("Live DeepSeek API call failed, using fallback engine:", err);
+        console.warn("Live DeepSeek V4 Pro API call failed, using fallback engine:", err);
         content = generateDeepSeekFallback(body.type, body.topic, body.cta);
       }
     } else if (process.env.OPENAI_API_KEY) {
@@ -112,7 +116,7 @@ export async function POST(req: NextRequest) {
       content = generateDeepSeekFallback(body.type, body.topic, body.cta);
     }
 
-    return NextResponse.json({ content, provider: process.env.DEEPSEEK_API_KEY ? "deepseek" : provider });
+    return NextResponse.json({ content, provider: "deepseek", model });
   } catch (error) {
     console.error("AI generation error:", error);
     return NextResponse.json({

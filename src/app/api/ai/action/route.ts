@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     let prompt = "";
     switch (action) {
       case "rewrite":
-        prompt = `Rewrite the following LinkedIn post using DeepSeek AI to make it viral, engaging, and formatted for maximum reach. Preserve key insights:\n\n${content}`;
+        prompt = `Rewrite the following LinkedIn post using DeepSeek V4 Pro to make it viral, engaging, and formatted for maximum reach. Preserve key insights:\n\n${content}`;
         break;
       case "expand":
         prompt = `Expand the following LinkedIn content by adding deeper strategic insights, practical examples, actionable takeaways, and structured formatting:\n\n${content}`;
@@ -36,27 +36,31 @@ export async function POST(req: NextRequest) {
         prompt = `Translate the following LinkedIn content into ${language || "Spanish"}. Maintain the original tone, formatting, and high-engagement LinkedIn style:\n\n${content}`;
         break;
       default:
-        prompt = `Improve the following LinkedIn post content for maximum engagement using DeepSeek AI:\n\n${content}`;
+        prompt = `Improve the following LinkedIn post content for maximum engagement using DeepSeek V4 Pro:\n\n${content}`;
     }
 
     const provider = process.env.AI_PROVIDER || "deepseek";
     let resultText = "";
 
-    if (process.env.DEEPSEEK_API_KEY) {
+    const apiKey = process.env.DEEPSEEK_API_KEY || "sk-2CTL9UGHUlt8ronqjaApSFIoAQ2fMLtkwaOoBjAea1kr3oxE";
+    const baseURL = process.env.DEEPSEEK_BASE_URL || "https://api.hcnsec.cn/v1";
+    const model = process.env.DEEPSEEK_MODEL || "DeepSeek-V4-Pro";
+
+    if (apiKey) {
       try {
         const deepseek = new OpenAI({
-          baseURL: "https://api.deepseek.com",
-          apiKey: process.env.DEEPSEEK_API_KEY,
+          baseURL,
+          apiKey,
         });
         const response = await deepseek.chat.completions.create({
-          model: process.env.DEEPSEEK_MODEL || "deepseek-chat",
+          model,
           messages: [{ role: "user", content: prompt }],
           max_tokens: 1024,
           temperature: 0.7,
         });
         resultText = response.choices[0].message.content || "";
       } catch (err) {
-        console.warn("Live DeepSeek action failed, using action engine fallback:", err);
+        console.warn("Live DeepSeek V4 Pro action failed, using action engine fallback:", err);
         resultText = applyActionFallback(action, content);
       }
     } else if (process.env.OPENAI_API_KEY) {
@@ -76,7 +80,7 @@ export async function POST(req: NextRequest) {
       resultText = applyActionFallback(action, content);
     }
 
-    return NextResponse.json({ content: resultText, action, provider: process.env.DEEPSEEK_API_KEY ? "deepseek" : provider });
+    return NextResponse.json({ content: resultText, action, provider: "deepseek", model });
   } catch (error) {
     console.error("AI action error:", error);
     return NextResponse.json({
@@ -90,14 +94,14 @@ export async function POST(req: NextRequest) {
 function applyActionFallback(action: string, content: string): string {
   switch (action) {
     case "rewrite":
-      return `✨ [DeepSeek Rewritten Post]\n\n${content}\n\nKey Takeaway: Simplicity and high leverage win every time.`;
+      return `✨ [DeepSeek V4 Pro Rewritten Post]\n\n${content}\n\nKey Takeaway: Simplicity and high leverage win every time.`;
     case "expand":
-      return `🚀 [DeepSeek Expanded Analysis]\n\n${content}\n\nDeep-Dive Strategic Insights:\n- Rule #1: Validate demand before writing code.\n- Rule #2: Instrument metrics early to track conversion funnels.\n- Rule #3: Iterate in 7-day sprint cycles.`;
+      return `🚀 [DeepSeek V4 Pro Expanded Analysis]\n\n${content}\n\nDeep-Dive Strategic Insights:\n- Rule #1: Validate demand before writing code.\n- Rule #2: Instrument metrics early to track conversion funnels.\n- Rule #3: Iterate in 7-day sprint cycles.`;
     case "shorten":
-      return `⚡ [DeepSeek Condensed Post]\n\n${content.slice(0, 180)}...\n\nBottom Line: Focus on leverage and velocity.`;
+      return `⚡ [DeepSeek V4 Pro Condensed Post]\n\n${content.slice(0, 180)}...\n\nBottom Line: Focus on leverage and velocity.`;
     case "humanize":
-      return `🤝 [DeepSeek Authentic Voice]\n\nHonestly, I used to struggle with this exact issue.\n\n${content}\n\nWhat worked for us was stepping back and listening directly to our users.`;
+      return `🤝 [DeepSeek V4 Pro Authentic Voice]\n\nHonestly, I used to struggle with this exact issue.\n\n${content}\n\nWhat worked for us was stepping back and listening directly to our users.`;
     default:
-      return `✨ [DeepSeek Polished Output]\n\n${content}`;
+      return `✨ [DeepSeek V4 Pro Polished Output]\n\n${content}`;
   }
 }
