@@ -99,10 +99,24 @@ function AIStudioContent() {
         body: JSON.stringify(form),
       });
 
+      if (res.status === 403) {
+        const err = await res.json();
+        toast.error(err.error || "No credits remaining. Please upgrade your plan.");
+        setCredits(0);
+        return;
+      }
+      if (res.status === 429) {
+        toast.error("Rate limit exceeded. Please wait a moment before generating again.");
+        return;
+      }
       if (!res.ok) throw new Error("Generation failed");
       const data = await res.json();
       setResult(data);
-      setCredits((c) => c - 1);
+      if (typeof data.creditsRemaining === "number") {
+        setCredits(data.creditsRemaining);
+      } else {
+        setCredits((c) => c - 1);
+      }
       toast.success("Content generated!");
     } catch (err) {
       toast.error("Failed to generate content. Please try again.");

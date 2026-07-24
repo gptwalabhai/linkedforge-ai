@@ -3,6 +3,21 @@ import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+const MASTER_ACTION_SYSTEM_PROMPT = `You are an elite, 20-year veteran LinkedIn ghostwriter and content strategist.
+Your task is to transform existing content into high-performing, viral, and deeply engaging LinkedIn posts.
+
+### DEEP UNDERSTANDING OF ALGORITHM SIGNALS:
+- Dwell Time: Hook the reader immediately and maintain attention through formatting.
+- Comments: Ensure the content ends naturally with a prompt or opening for discussion.
+- Saves & Shares: Structure the transformed content so it delivers dense, actionable value.
+
+### CORE TRANSFORMATION RULES:
+- Write for mobile readability (short paragraphs, 1-3 lines max, good whitespace).
+- Avoid corporate jargon, buzzwords, and overly robotic phrasing.
+- If rewriting or humanizing: Inject authenticity and write conversationally.
+- Maintain the core message but optimize the delivery using proven LinkedIn frameworks (like AIDA, PAS, or BAB) if applicable.
+- Ensure the result does NOT look like AI-generated text.`;
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -12,31 +27,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Content is required" }, { status: 400 });
     }
 
-    let prompt = "";
+    let userPrompt = "";
     switch (action) {
       case "rewrite":
-        prompt = `Rewrite the following LinkedIn post using DeepSeek V4 Pro to make it viral, engaging, and formatted for maximum reach. Preserve key insights:\n\n${content}`;
+        userPrompt = `Rewrite the following LinkedIn post to make it viral, engaging, and formatted for maximum reach. Preserve key insights:\n\n${content}`;
         break;
       case "expand":
-        prompt = `Expand the following LinkedIn content by adding deeper strategic insights, practical examples, actionable takeaways, and structured formatting:\n\n${content}`;
+        userPrompt = `Expand the following LinkedIn content by adding deeper strategic insights, practical examples, actionable takeaways, and structured formatting:\n\n${content}`;
         break;
       case "shorten":
-        prompt = `Shorten and condense the following LinkedIn post into a punchy, ultra-readable 2-4 paragraph format with maximum impact:\n\n${content}`;
+        userPrompt = `Shorten and condense the following LinkedIn post into a punchy, ultra-readable 2-4 paragraph format with maximum impact:\n\n${content}`;
         break;
       case "humanize":
-        prompt = `Humanize the following LinkedIn post. Remove corporate jargon, robotic phrasing, and make it sound like an authentic personal story from an industry leader:\n\n${content}`;
+        userPrompt = `Humanize the following LinkedIn post. Remove corporate jargon, robotic phrasing, and make it sound like an authentic personal story from an industry leader:\n\n${content}`;
         break;
       case "factCheck":
-        prompt = `Analyze the following LinkedIn post content and highlight any potential claims, statistics, or facts that require double-checking or sourcing, and suggest improved wording:\n\n${content}`;
+        userPrompt = `Analyze the following LinkedIn post content and highlight any potential claims, statistics, or facts that require double-checking or sourcing, and suggest improved wording:\n\n${content}`;
         break;
       case "grammar":
-        prompt = `Polish and fix all spelling, punctuation, and grammatical errors in the following LinkedIn content while enhancing overall flow:\n\n${content}`;
+        userPrompt = `Polish and fix all spelling, punctuation, and grammatical errors in the following LinkedIn content while enhancing overall flow:\n\n${content}`;
         break;
       case "translate":
-        prompt = `Translate the following LinkedIn content into ${language || "Spanish"}. Maintain the original tone, formatting, and high-engagement LinkedIn style:\n\n${content}`;
+        userPrompt = `Translate the following LinkedIn content into ${language || "Spanish"}. Maintain the original tone, formatting, and high-engagement LinkedIn style:\n\n${content}`;
         break;
       default:
-        prompt = `Improve the following LinkedIn post content for maximum engagement using DeepSeek V4 Pro:\n\n${content}`;
+        userPrompt = `Improve the following LinkedIn post content for maximum engagement:\n\n${content}`;
     }
 
     const provider = process.env.AI_PROVIDER || "deepseek";
@@ -54,7 +69,10 @@ export async function POST(req: NextRequest) {
         });
         const response = await deepseek.chat.completions.create({
           model,
-          messages: [{ role: "user", content: prompt }],
+          messages: [
+            { role: "system", content: MASTER_ACTION_SYSTEM_PROMPT },
+            { role: "user", content: userPrompt }
+          ],
           max_tokens: 1024,
           temperature: 0.7,
         });
@@ -68,7 +86,10 @@ export async function POST(req: NextRequest) {
         const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
         const response = await openai.chat.completions.create({
           model: "gpt-4o-mini",
-          messages: [{ role: "user", content: prompt }],
+          messages: [
+            { role: "system", content: MASTER_ACTION_SYSTEM_PROMPT },
+            { role: "user", content: userPrompt }
+          ],
           max_tokens: 1024,
           temperature: 0.7,
         });
