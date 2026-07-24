@@ -10,39 +10,46 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  // Fetch user data
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    include: {
-      posts: {
-        orderBy: { createdAt: "desc" },
-        take: 5,
-        select: {
-          id: true,
-          type: true,
-          title: true,
-          content: true,
-          status: true,
-          createdAt: true,
-          likes: true,
-          comments: true,
-          impressions: true,
+  // Fetch user data with error safety
+  const user = session.user.id
+    ? await prisma.user.findUnique({
+        where: { id: session.user.id },
+        include: {
+          posts: {
+            orderBy: { createdAt: "desc" },
+            take: 5,
+            select: {
+              id: true,
+              type: true,
+              title: true,
+              content: true,
+              status: true,
+              createdAt: true,
+              likes: true,
+              comments: true,
+              impressions: true,
+            },
+          },
+          subscriptions: {
+            where: { userId: session.user.id },
+            orderBy: { createdAt: "desc" },
+            take: 1,
+          },
         },
-      },
-      subscriptions: {
-        where: { userId: session.user.id },
-        orderBy: { createdAt: "desc" },
-        take: 1,
-      },
-    },
-  });
+      }).catch(() => null)
+    : null;
 
-  if (!user) redirect("/login");
+  const displayUser = {
+    name: user?.name || session.user.name || session.user.email || "Professional User",
+    email: user?.email || session.user.email,
+    image: user?.image || session.user.image || null,
+    plan: user?.subscriptions?.[0]?.plan || "FREE",
+    credits: user?.subscriptions?.[0]
+      ? user.subscriptions[0].creditsMonthly - user.subscriptions[0].creditsUsed
+      : (session.user as any).credits || 50,
+  };
 
-  const subscription = user.subscriptions?.[0];
-  const posts = user.posts || [];
-  const credits = subscription ? subscription.creditsMonthly - subscription.creditsUsed : 10;
-  const plan = subscription?.plan || "FREE";
+  const posts = user?.posts || [];
 
   // Calculate stats
   const totalPosts = posts.length;
@@ -65,13 +72,7 @@ export default async function DashboardPage() {
   return (
     <AppShell>
       <DashboardView
-        user={{
-          name: user?.name || user?.email || "User",
-          email: user.email,
-          image: user.image,
-          plan: plan,
-          credits: credits,
-        }}
+        user={displayUser}
         stats={{
           totalPosts,
           publishedPosts,

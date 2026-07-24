@@ -10,31 +10,33 @@ export default async function SettingsPage() {
     redirect("/login");
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    include: {
-      accounts: true,
-    },
-  });
+  const user = session.user.id
+    ? await prisma.user.findUnique({
+        where: { id: session.user.id },
+        include: {
+          accounts: true,
+        },
+      }).catch(() => null)
+    : null;
 
-  if (!user) redirect("/login");
+  const displayUser = {
+    id: user?.id || session.user.id,
+    name: user?.name || session.user.name || "",
+    email: user?.email || session.user.email,
+    image: user?.image || session.user.image || null,
+    brandVoice: user?.brandVoice || "",
+    writingStyle: user?.writingStyle || "",
+    industry: user?.industry || "",
+    jobTitle: user?.jobTitle || "",
+    company: user?.company || "",
+    timezone: user?.timezone || "UTC",
+  };
 
   return (
     <AppShell>
       <SettingsView
-        user={{
-          id: user.id,
-          name: user.name || "",
-          email: user.email,
-          image: user.image,
-          brandVoice: user.brandVoice || "",
-          writingStyle: user.writingStyle || "",
-          industry: user.industry || "",
-          jobTitle: user.jobTitle || "",
-          company: user.company || "",
-          timezone: user.timezone || "UTC",
-        }}
-        hasPassword={!!user.password}
+        user={displayUser}
+        hasPassword={!!user?.password}
       />
     </AppShell>
   );

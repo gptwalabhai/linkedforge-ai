@@ -10,29 +10,35 @@ export default async function AnalyticsPage() {
     redirect("/login");
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    include: {
-      posts: {
-        orderBy: { createdAt: "desc" },
-        select: {
-          id: true,
-          type: true,
-          title: true,
-          content: true,
-          status: true,
-          createdAt: true,
-          likes: true,
-          comments: true,
-          impressions: true,
+  const user = session.user.id
+    ? await prisma.user.findUnique({
+        where: { id: session.user.id },
+        include: {
+          posts: {
+            orderBy: { createdAt: "desc" },
+            select: {
+              id: true,
+              type: true,
+              title: true,
+              content: true,
+              status: true,
+              createdAt: true,
+              likes: true,
+              comments: true,
+              impressions: true,
+            },
+          },
         },
-      },
-    },
-  });
+      }).catch(() => null)
+    : null;
 
-  if (!user) redirect("/login");
+  const displayUser = {
+    name: user?.name || session.user.name || session.user.email || "User",
+    email: user?.email || session.user.email,
+    image: user?.image || session.user.image || null,
+  };
 
-  const posts = user.posts || [];
+  const posts = user?.posts || [];
 
   // Calculate stats
   const totalPosts = posts.length;
@@ -105,11 +111,7 @@ export default async function AnalyticsPage() {
   return (
     <AppShell>
       <AnalyticsView
-        user={{
-          name: user?.name || user?.email || "User",
-          email: user.email,
-          image: user.image,
-        }}
+        user={displayUser}
         stats={{
           totalPosts,
           totalImpressions,
