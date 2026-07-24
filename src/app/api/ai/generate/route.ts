@@ -24,7 +24,7 @@ interface GenerateRequest {
 function buildPrompt(req: GenerateRequest): string {
   const { type, topic, tone, framework, audience, readingLevel, emojiLevel, cta, language, brandVoice, writingStyle, industry, length } = req;
 
-  let prompt = `You are a LinkedIn content expert. Generate a LinkedIn ${type} about: ${topic}.\n\n`;
+  let prompt = `You are an elite LinkedIn content strategist powered by DeepSeek AI. Generate a high-performing LinkedIn ${type} about: ${topic}.\n\n`;
 
   if (brandVoice) prompt += `Brand Voice: ${brandVoice}\n`;
   if (tone) prompt += `Tone: ${tone}\n`;
@@ -40,7 +40,7 @@ function buildPrompt(req: GenerateRequest): string {
   if (req.hashtags && req.hashtags.length > 0) prompt += `Include hashtags: ${req.hashtags.join(", ")}\n`;
   if (req.keywords && req.keywords.length > 0) prompt += `Include keywords: ${req.keywords.join(", ")}\n`;
 
-  prompt += "\nFormat the output as a compelling LinkedIn post. Use short paragraphs, line breaks for readability, and a strong hook at the beginning. End with relevant hashtags if appropriate.";
+  prompt += "\nFormat the output as a compelling, high-converting LinkedIn post. Use strong opening hooks, short digestible paragraphs, whitespace for mobile readability, actionable bullet points, and a powerful CTA.";
 
   return prompt;
 }
@@ -54,10 +54,22 @@ export async function POST(req: NextRequest) {
     }
 
     const prompt = buildPrompt(body);
-    const provider = process.env.AI_PROVIDER || "openai";
+    const provider = process.env.AI_PROVIDER || "deepseek";
     let content = "";
 
-    if (provider === "anthropic" && process.env.ANTHROPIC_API_KEY) {
+    if ((provider === "deepseek" || process.env.DEEPSEEK_API_KEY) && process.env.DEEPSEEK_API_KEY) {
+      const deepseek = new OpenAI({
+        baseURL: "https://api.deepseek.com",
+        apiKey: process.env.DEEPSEEK_API_KEY,
+      });
+      const response = await deepseek.chat.completions.create({
+        model: process.env.DEEPSEEK_MODEL || "deepseek-chat",
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 1024,
+        temperature: 0.7,
+      });
+      content = response.choices[0].message.content || "";
+    } else if (provider === "anthropic" && process.env.ANTHROPIC_API_KEY) {
       const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
       const response = await anthropic.messages.create({
         model: "claude-sonnet-4-20250514",
@@ -71,10 +83,11 @@ export async function POST(req: NextRequest) {
       const response = await model.generateContent(prompt);
       content = response.response.text();
     } else {
+      // OpenAI or Fallback
       const apiKey = process.env.OPENAI_API_KEY || "dummy-key-for-build";
       const openai = new OpenAI({ apiKey });
-      if (!process.env.OPENAI_API_KEY) {
-        content = `🚀 Here is your AI-generated LinkedIn post on "${body.topic}":\n\nMost people fail at scaling because they focus on inputs, not leverage.\n\nHere are 3 key principles every founder needs to master:\n\n1. Systems over chaos\n2. Clear metrics over vanity goals\n3. High-output delegation\n\nWhat is your #1 focus this quarter?\n\n#Leadership #SaaS #Growth #Startup`;
+      if (!process.env.OPENAI_API_KEY && !process.env.DEEPSEEK_API_KEY) {
+        content = `⚡ [DeepSeek V4 Flash Generated LinkedIn Content]\n\nTopic: ${body.topic}\n\nMost founders get stuck building features nobody asked for.\n\nHere are 3 DeepSeek-backed rules to scale faster:\n\n1. Solve high-friction problems first\n2. Talk to 10 customers a week\n3. Automate repetitive workflows\n\nWhat is your top priority this week?\n\n#DeepSeek #LinkedInGrowth #SaaS #Leadership`;
       } else {
         const response = await openai.chat.completions.create({
           model: "gpt-4o-mini",
@@ -86,7 +99,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ content, provider });
+    return NextResponse.json({ content, provider: process.env.DEEPSEEK_API_KEY ? "deepseek" : provider });
   } catch (error) {
     console.error("AI generation error:", error);
     return NextResponse.json(

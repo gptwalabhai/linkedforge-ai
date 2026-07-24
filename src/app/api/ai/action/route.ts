@@ -15,22 +15,22 @@ export async function POST(req: NextRequest) {
     let prompt = "";
     switch (action) {
       case "rewrite":
-        prompt = `Rewrite the following LinkedIn post to make it more engaging, punchy, and formatted for high LinkedIn reach. Preserve key points:\n\n${content}`;
+        prompt = `Rewrite the following LinkedIn post using DeepSeek AI to make it viral, engaging, and formatted for maximum reach. Preserve key insights:\n\n${content}`;
         break;
       case "expand":
-        prompt = `Expand the following LinkedIn content by adding deeper insights, practical examples, actionable takeaways, and structured formatting:\n\n${content}`;
+        prompt = `Expand the following LinkedIn content by adding deeper strategic insights, practical examples, actionable takeaways, and structured formatting:\n\n${content}`;
         break;
       case "shorten":
         prompt = `Shorten and condense the following LinkedIn post into a punchy, ultra-readable 2-4 paragraph format with maximum impact:\n\n${content}`;
         break;
       case "humanize":
-        prompt = `Humanize the following LinkedIn post. Remove corporate speak, jargon, robotic transitions, and make it sound like an authentic personal story from an industry leader:\n\n${content}`;
+        prompt = `Humanize the following LinkedIn post. Remove corporate jargon, robotic phrasing, and make it sound like an authentic personal story from an industry leader:\n\n${content}`;
         break;
       case "factCheck":
         prompt = `Analyze the following LinkedIn post content and highlight any potential claims, statistics, or facts that require double-checking or sourcing, and suggest improved wording:\n\n${content}`;
         break;
       case "grammar":
-        prompt = `Polishing and fix all spelling, punctuation, and grammatical errors in the following LinkedIn content while enhancing overall flow:\n\n${content}`;
+        prompt = `Polish and fix all spelling, punctuation, and grammatical errors in the following LinkedIn content while enhancing overall flow:\n\n${content}`;
         break;
       case "translate":
         prompt = `Translate the following LinkedIn content into ${language || "Spanish"}. Maintain the original tone, formatting, and high-engagement LinkedIn style:\n\n${content}`;
@@ -45,13 +45,25 @@ export async function POST(req: NextRequest) {
         prompt = `Take the following YouTube video transcript/summary and convert it into a top-performing LinkedIn post summarizing key lessons learned:\n\n${content}`;
         break;
       default:
-        prompt = `Improve the following LinkedIn post content for maximum engagement:\n\n${content}`;
+        prompt = `Improve the following LinkedIn post content for maximum engagement using DeepSeek AI:\n\n${content}`;
     }
 
-    const provider = process.env.AI_PROVIDER || "openai";
+    const provider = process.env.AI_PROVIDER || "deepseek";
     let resultText = "";
 
-    if (provider === "anthropic" && process.env.ANTHROPIC_API_KEY) {
+    if ((provider === "deepseek" || process.env.DEEPSEEK_API_KEY) && process.env.DEEPSEEK_API_KEY) {
+      const deepseek = new OpenAI({
+        baseURL: "https://api.deepseek.com",
+        apiKey: process.env.DEEPSEEK_API_KEY,
+      });
+      const response = await deepseek.chat.completions.create({
+        model: process.env.DEEPSEEK_MODEL || "deepseek-chat",
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 1024,
+        temperature: 0.7,
+      });
+      resultText = response.choices[0].message.content || "";
+    } else if (provider === "anthropic" && process.env.ANTHROPIC_API_KEY) {
       const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
       const response = await anthropic.messages.create({
         model: "claude-sonnet-4-20250514",
@@ -67,9 +79,8 @@ export async function POST(req: NextRequest) {
     } else {
       const apiKey = process.env.OPENAI_API_KEY || "dummy-key-for-build";
       const openai = new OpenAI({ apiKey });
-      if (!process.env.OPENAI_API_KEY) {
-        // Fallback response for preview/build environment without key
-        resultText = `[AI Action Preview - ${action.toUpperCase()}]\n\nHere is an optimized, high-converting version of your content:\n\n${content}\n\n💡 Pro Tip: Configure your OPENAI_API_KEY in .env for live AI responses!`;
+      if (!process.env.OPENAI_API_KEY && !process.env.DEEPSEEK_API_KEY) {
+        resultText = `⚡ [DeepSeek V4 Flash Action - ${action.toUpperCase()}]\n\nHere is your optimized LinkedIn content powered by DeepSeek AI:\n\n${content}\n\n💡 Set DEEPSEEK_API_KEY in .env for live API generation!`;
       } else {
         const response = await openai.chat.completions.create({
           model: "gpt-4o-mini",
@@ -81,7 +92,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ content: resultText, action, provider });
+    return NextResponse.json({ content: resultText, action, provider: process.env.DEEPSEEK_API_KEY ? "deepseek" : provider });
   } catch (error) {
     console.error("AI action error:", error);
     return NextResponse.json(
