@@ -83,12 +83,13 @@ export async function POST(request: NextRequest) {
 
     const res = await auth.handler(request);
     if (res.ok) {
-      res.cookies.set("linkedforge_user_data", encodeURIComponent(JSON.stringify({ name, email })), {
+      const nextRes = new NextResponse(res.body, res);
+      nextRes.cookies.set("linkedforge_user_data", encodeURIComponent(JSON.stringify({ name, email })), {
         httpOnly: false,
         path: "/",
         maxAge: 60 * 60 * 24 * 7,
       });
-      return res;
+      return nextRes;
     }
 
     // Fallback response for unmigrated DB or missing social provider keys
