@@ -8,6 +8,7 @@ on:
 
 jobs:
   build:
+    name: Build & Type Check
     runs-on: ubuntu-latest
 
     services:
@@ -23,46 +24,44 @@ jobs:
           - 5432:5432
 
     steps:
-      - name: Checkout
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate Prisma
+      - name: Generate Prisma Client
         run: npx prisma generate
 
-      - name: Run database migrations
+      - name: Sync Database Schema
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/linkedforge_test
         run: npx prisma db push
 
-      - name: Build
+      - name: Build Next.js Production Bundle
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/linkedforge_test
           NEXTAUTH_SECRET: test-secret-for-ci-build-only
           BETTER_AUTH_SECRET: test-secret-for-ci-build-only
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
         run: npm run build
 
-      - name: Run tests
+      - name: Run Tests (if present)
         run: npm test --if-present
 
   deploy:
+    name: Deploy to Vercel
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && secrets.VERCEL_TOKEN != ''
 
     steps:
-      - name: Checkout
+      - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Deploy to Vercel
