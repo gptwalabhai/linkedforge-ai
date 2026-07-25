@@ -38,17 +38,17 @@ interface NavItem {
 
 const workspaceNav: NavItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
-  { label: "AI Studio", icon: Sparkles, href: "/ai-studio", badge: "New" },
+  { label: "AI Studio", icon: Sparkles, href: "/studio", badge: "New" },
   { label: "Posts", icon: FileText, href: "/posts" },
   { label: "Calendar", icon: CalendarDays, href: "/calendar" },
   { label: "Analytics", icon: BarChart3, href: "/analytics" },
 ];
 
 const contentTypesNav: NavItem[] = [
-  { label: "Posts", icon: FileText, href: "/content/posts" },
-  { label: "Carousels", icon: Image, href: "/content/carousels" },
-  { label: "Videos", icon: Video, href: "/content/videos" },
-  { label: "Emails", icon: Mail, href: "/content/emails" },
+  { label: "Posts", icon: FileText, href: "/studio?type=POST" },
+  { label: "Carousels", icon: Image, href: "/studio?type=CAROUSEL" },
+  { label: "Video Scripts", icon: Video, href: "/studio?type=STORY" },
+  { label: "Outreach Emails", icon: Mail, href: "/studio?type=COLD_OUTREACH" },
 ];
 
 const moreNav: NavItem[] = [

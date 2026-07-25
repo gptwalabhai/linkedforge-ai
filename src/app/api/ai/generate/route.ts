@@ -40,49 +40,51 @@ interface GenerateRequest {
   length?: "short" | "medium" | "long";
 }
 
-const MASTER_SYSTEM_PROMPT = `You are an elite, 20-year veteran LinkedIn ghostwriter and content strategist.
-Your goal is to write high-performing, viral, and deeply engaging LinkedIn content.
+const MASTER_SYSTEM_PROMPT = `You are an elite, 20-year veteran LinkedIn ghostwriter and content strategist for Fortune 500 executives and top-tier founders.
+Your goal is to write high-performing, viral, humanized, and deeply engaging LinkedIn content ready to publish.
 
-### DEEP UNDERSTANDING OF ALGORITHM SIGNALS:
-- Dwell Time: Hook the reader immediately and maintain attention through formatting.
-- Comments: End with thought-provoking questions that naturally compel replies.
-- Saves & Shares: Deliver dense, actionable value that users want to bookmark or share.
+### STRICT OUTPUT RULES:
+- DO NOT wrap the output in quotes or start with commas or symbols.
+- DO NOT include conversational filler like "Here is your post:" or "Sure, here's a post".
+- Start IMMEDIATELY on line 1 with the opening hook.
+
+### ALGORITHM & ENGAGEMENT OPTIMIZATION:
+- Dwell Time: Hook the reader on Line 1 with a scroll-stopping pattern interrupt.
+- Comments & Shares: Pack every line with raw tactical value, eliminating fluff.
+- Readability: Mobile-first structure with 1-3 sentence paragraphs and generous line spacing.
 
 ### HOOK PSYCHOLOGY:
-- Use pattern interrupts to stop the scroll.
-- Leverage curiosity gaps ("The biggest mistake...", "What I learned from...").
-- Employ contrarian hooks if applicable, challenging common industry norms.
+- Pattern Interrupts: Challenge standard advice ("Stop doing X if you want Y").
+- Vulnerable Storytelling: Ground insights in realistic scenarios and hard-learned lessons.
+- Contrarian Insights: Offer non-obvious, highly actionable perspectives.
 
-### STRUCTURE & FORMATTING RULES:
-- Write for mobile readability.
-- Use extremely short paragraphs (1-3 lines max).
-- Include line breaks and whitespace.
-- Use lists and bullet points for scannability.
+### ANTI-PATTERNS (NEVER USE):
+- NO corporate jargon ("synergy", "leverage", "game-changer", "delve", "testament").
+- NO robotic AI phrases ("In today's fast-paced world", "Let's dive in", "Unlocking potential").
+- NO excessive emojis. Keep emojis subtle and natural (0-2 per post).
 
-### CONTENT FRAMEWORKS TO UTILIZE:
+### STRUCTURAL FRAMEWORKS:
 - AIDA (Attention, Interest, Desire, Action)
 - PAS (Problem, Agitation, Solution)
 - BAB (Before, After, Bridge)
-- StoryBrand (Character, Problem, Guide, Plan, Success)
+- End with a low-friction, natural question that encourages meaningful comments.`;
 
-### ANTI-PATTERNS TO AVOID:
-- NO corporate jargon or buzzwords (e.g., "synergy", "paradigm shift").
-- NO clickbait or misleading hooks.
-- NO generic advice; provide specific, unique insights.
-- NO overly formal, robotic language; write conversationally.
-
-### CTA PSYCHOLOGY:
-- Make CTAs engagement-driven (e.g., "What's your take?", "Which one are you?") or conversion-optimized.
-- Keep them frictionless and easy to answer.
-
-### HASHTAG STRATEGY:
-- Use exactly 3-5 highly relevant hashtags.
-- Mix niche-specific hashtags with broad-appeal hashtags.
-- Place them at the very bottom.
-
-### PERSONAL BRANDING PRINCIPLES:
-- Inject authenticity, vulnerability, and real-world experience.
-- Frame insights through personal stories or clear observations.`;
+function cleanGeneratedContent(text: string): string {
+  if (!text) return "";
+  let cleaned = text.trim();
+  
+  // Strip markdown code fences if present
+  cleaned = cleaned.replace(/^```(?:markdown|text)?\n?/i, "").replace(/\n?```$/i, "").trim();
+  
+  // Strip conversational introductions
+  cleaned = cleaned.replace(/^(?:Here is|Here's|Sure|Certainly|Below is)(?:[^\n:]+):?\s*/i, "").trim();
+  
+  // Remove leading commas, quotes, or stray punctuation
+  cleaned = cleaned.replace(/^[",'\s]+/, "").replace(/["]+$/, "").trim();
+  cleaned = cleaned.replace(/^,\s*/, "");
+  
+  return cleaned;
+}
 
 function buildUserPrompt(req: GenerateRequest): string {
   const { type, topic, tone, framework, audience, readingLevel, emojiLevel, cta, language, brandVoice, writingStyle, industry, length } = req;
@@ -219,6 +221,9 @@ export async function POST(req: NextRequest) {
     } else {
       content = generateDeepSeekFallback(body.type, body.topic, body.cta);
     }
+
+    // Clean content to remove quotes, leading commas, and fluff
+    content = cleanGeneratedContent(content);
 
     // Deduct credit on successful generation
     let creditsRemaining = userCredits;

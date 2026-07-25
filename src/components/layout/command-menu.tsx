@@ -27,7 +27,7 @@ interface CommandMenuItem {
 
 const navigationCommands: CommandMenuItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard", shortcut: "G D" },
-  { label: "AI Studio", icon: Sparkles, href: "/ai-studio", shortcut: "G A" },
+  { label: "AI Studio", icon: Sparkles, href: "/studio", shortcut: "G A" },
   { label: "Posts", icon: FileText, href: "/posts", shortcut: "G P" },
   { label: "Calendar", icon: CalendarDays, href: "/calendar", shortcut: "G C" },
   { label: "Analytics", icon: BarChart3, href: "/analytics", shortcut: "G N" },
@@ -36,10 +36,10 @@ const navigationCommands: CommandMenuItem[] = [
 ];
 
 const contentCommands: CommandMenuItem[] = [
-  { label: "New Post", icon: FileText, action: () => console.log("New Post") },
-  { label: "New Carousel", icon: Image, action: () => console.log("New Carousel") },
-  { label: "New Video Script", icon: Video, action: () => console.log("New Video Script") },
-  { label: "New Email", icon: Mail, action: () => console.log("New Email") },
+  { label: "New Post", icon: FileText, href: "/studio?type=POST" },
+  { label: "New Carousel", icon: Image, href: "/studio?type=CAROUSEL" },
+  { label: "New Video Script", icon: Video, href: "/studio?type=STORY" },
+  { label: "New Outreach Email", icon: Mail, href: "/studio?type=COLD_OUTREACH" },
 ];
 
 interface CommandMenuProps {

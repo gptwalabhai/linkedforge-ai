@@ -18,6 +18,16 @@ Your task is to transform existing content into high-performing, viral, and deep
 - Maintain the core message but optimize the delivery using proven LinkedIn frameworks (like AIDA, PAS, or BAB) if applicable.
 - Ensure the result does NOT look like AI-generated text.`;
 
+function cleanGeneratedContent(text: string): string {
+  if (!text) return "";
+  let cleaned = text.trim();
+  cleaned = cleaned.replace(/^```(?:markdown|text)?\n?/i, "").replace(/\n?```$/i, "").trim();
+  cleaned = cleaned.replace(/^(?:Here is|Here's|Sure|Certainly|Below is)(?:[^\n:]+):?\s*/i, "").trim();
+  cleaned = cleaned.replace(/^[",'\s]+/, "").replace(/["]+$/, "").trim();
+  cleaned = cleaned.replace(/^,\s*/, "");
+  return cleaned;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -100,6 +110,8 @@ export async function POST(req: NextRequest) {
     } else {
       resultText = applyActionFallback(action, content);
     }
+
+    resultText = cleanGeneratedContent(resultText);
 
     return NextResponse.json({ content: resultText, action, provider: "deepseek", model });
   } catch (error) {
