@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Sparkles,
@@ -12,47 +14,41 @@ import {
   Image,
   Video,
   Mail,
-  ChevronDown,
+  Shield,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { usePathname } from "next/navigation";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 
 interface NavItem {
   label: string;
   icon: LucideIcon;
-  href?: string;
+  href: string;
   badge?: string | number;
-  children?: NavItem[];
 }
 
-const workspaceNav: NavItem[] = [
+const mainNav: NavItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
-  { label: "AI Studio", icon: Sparkles, href: "/studio", badge: "New" },
-  { label: "Posts", icon: FileText, href: "/posts" },
-  { label: "Calendar", icon: CalendarDays, href: "/calendar" },
+  { label: "AI Content Studio", icon: Sparkles, href: "/studio", badge: "Pro" },
+  { label: "Post Library", icon: FileText, href: "/posts" },
+  { label: "Content Calendar", icon: CalendarDays, href: "/calendar" },
   { label: "Analytics", icon: BarChart3, href: "/analytics" },
 ];
 
-const contentTypesNav: NavItem[] = [
-  { label: "Posts", icon: FileText, href: "/studio?type=POST" },
-  { label: "Carousels", icon: Image, href: "/studio?type=CAROUSEL" },
+const shortcutsNav: NavItem[] = [
+  { label: "Post Creator", icon: FileText, href: "/studio?type=POST" },
+  { label: "Carousel Builder", icon: Image, href: "/studio?type=CAROUSEL" },
   { label: "Video Scripts", icon: Video, href: "/studio?type=STORY" },
   { label: "Outreach Emails", icon: Mail, href: "/studio?type=COLD_OUTREACH" },
 ];
 
-const moreNav: NavItem[] = [
+const systemNav: NavItem[] = [
   { label: "Settings", icon: Settings, href: "/settings" },
+  { label: "Admin Panel", icon: Shield, href: "/admin" },
   { label: "Support", icon: LifeBuoy, href: "/support" },
 ];
 
@@ -61,166 +57,67 @@ interface SidebarNavProps {
   className?: string;
 }
 
-interface NavGroupProps {
-  title: string;
-  items: NavItem[];
-  collapsed: boolean;
-}
-
-function NavGroup({ title, items, collapsed }: NavGroupProps) {
+function NavSection({ title, items, collapsed }: { title: string; items: NavItem[]; collapsed: boolean }) {
   const pathname = usePathname();
-  const [isOpen, setIsOpen] = React.useState(true);
-
-  if (collapsed) {
-    return (
-      <div className="mb-2">
-        {items.map((item) => (
-          <Tooltip key={item.label} delayDuration={0}>
-            <TooltipTrigger asChild>
-              <a
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-                  pathname === item.href
-                    ? "bg-accent text-foreground font-medium"
-                    : "text-muted-foreground hover:text-foreground hover:bg-accent"
-                )}
-              >
-                <item.icon className="h-5 w-5 shrink-0" />
-              </a>
-            </TooltipTrigger>
-            <TooltipContent side="right" className="flex items-center gap-2">
-              <span>{item.label}</span>
-            </TooltipContent>
-          </Tooltip>
-        ))}
-      </div>
-    );
-  }
 
   return (
     <div className="mb-4">
-      <div className="flex items-center justify-between px-3 mb-2">
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+      {!collapsed && (
+        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-3 mb-2 block font-mono">
           {title}
         </span>
-        {items.length > 1 && (
-          <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-            <CollapsibleTrigger asChild>
-              <button className="rounded p-0.5 hover:bg-accent transition-colors">
-                <ChevronDown
-                  className={cn(
-                    "h-3.5 w-3.5 text-muted-foreground transition-transform duration-200",
-                    isOpen && "rotate-180"
-                  )}
-                />
-              </button>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              {items.map((item) => (
-                <NavItemLink
-                  key={item.label}
-                  item={item}
-                  pathname={pathname}
-                  collapsed={collapsed}
-                />
-              ))}
-            </CollapsibleContent>
-          </Collapsible>
-        )}
+      )}
+      <div className="space-y-1">
+        {items.map((item) => {
+          const isActive = pathname === item.href || (item.href.includes("?") && pathname === item.href.split("?")[0]);
+          const Icon = item.icon;
+
+          const itemContent = (
+            <Link
+              key={item.label}
+              href={item.href}
+              className={cn(
+                "flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium transition-all duration-200",
+                isActive
+                  ? "bg-red-950/60 text-white font-bold border border-red-500/40 shadow-sm shadow-red-950"
+                  : "text-slate-400 hover:text-white hover:bg-white/5",
+                collapsed && "justify-center px-0 py-2.5"
+              )}
+            >
+              <Icon className={cn("h-4 w-4 shrink-0", isActive ? "text-red-400" : "text-slate-400")} />
+              {!collapsed && <span className="truncate">{item.label}</span>}
+              {!collapsed && item.badge && (
+                <span className="ml-auto inline-flex items-center rounded-full bg-red-950 px-2 py-0.5 text-[9px] font-bold font-mono text-red-300 border border-red-500/30">
+                  {item.badge}
+                </span>
+              )}
+            </Link>
+          );
+
+          if (collapsed) {
+            return (
+              <Tooltip key={item.label} delayDuration={0}>
+                <TooltipTrigger asChild>{itemContent}</TooltipTrigger>
+                <TooltipContent side="right" className="bg-[#12121e] text-white border-red-900/40 font-medium">
+                  {item.label}
+                </TooltipContent>
+              </Tooltip>
+            );
+          }
+
+          return itemContent;
+        })}
       </div>
-      {items.length <= 1 &&
-        items.map((item) => (
-          <NavItemLink
-            key={item.label}
-            item={item}
-            pathname={pathname}
-            collapsed={collapsed}
-          />
-        ))}
     </div>
   );
-}
-
-function NavItemLink({
-  item,
-  pathname,
-  collapsed,
-}: {
-  item: NavItem;
-  pathname: string;
-  collapsed: boolean;
-}) {
-  const isActive = pathname === item.href;
-
-  const content = (
-    <a
-      href={item.href}
-      className={cn(
-        "flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-200",
-        isActive
-          ? "bg-accent text-foreground font-medium shadow-sm"
-          : "text-muted-foreground hover:text-foreground hover:bg-accent/50",
-        collapsed && "justify-center"
-      )}
-    >
-      <div className="flex items-center gap-3">
-        <item.icon
-          className={cn(
-            "h-5 w-5 shrink-0 transition-colors",
-            isActive && "text-primary"
-          )}
-        />
-        {!collapsed && <span>{item.label}</span>}
-      </div>
-      {!collapsed && item.badge && (
-        <span
-          className={cn(
-            "ml-auto inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium",
-            isActive ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-          )}
-        >
-          {item.badge}
-        </span>
-      )}
-    </a>
-  );
-
-  if (collapsed) {
-    return (
-      <Tooltip key={item.label} delayDuration={0}>
-        <TooltipTrigger asChild>{content}</TooltipTrigger>
-        <TooltipContent side="right" className="flex items-center gap-2">
-          <span>{item.label}</span>
-          {item.badge && (
-            <span className="ml-1 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-medium text-primary-foreground">
-              {item.badge}
-            </span>
-          )}
-        </TooltipContent>
-      </Tooltip>
-    );
-  }
-
-  return content;
 }
 
 export function SidebarNav({ collapsed = false, className }: SidebarNavProps) {
   return (
     <nav className={cn("flex flex-col gap-1", className)}>
-      <NavGroup title="Workspace" items={workspaceNav} collapsed={collapsed} />
-
-      {!collapsed && (
-        <div className="my-2 border-t border-border" />
-      )}
-
-      <NavGroup title="Content Types" items={contentTypesNav} collapsed={collapsed} />
-
-      {!collapsed && (
-        <div className="my-2 border-t border-border" />
-      )}
-
-      <NavGroup title="More" items={moreNav} collapsed={collapsed} />
+      <NavSection title="Core Workspace" items={mainNav} collapsed={collapsed} />
+      <NavSection title="Quick Formats" items={shortcutsNav} collapsed={collapsed} />
+      <NavSection title="System & Support" items={systemNav} collapsed={collapsed} />
     </nav>
   );
 }
