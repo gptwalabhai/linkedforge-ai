@@ -49,26 +49,23 @@ export default function LoginPage() {
     try {
       const name = data.email.split("@")[0] || "User";
       const userData = JSON.stringify({ name, email: data.email });
-      document.cookie = `linkedforge_user_data=${encodeURIComponent(userData)}; path=/; max-age=604800`;
+      document.cookie = `linkedforge_user_data=${encodeURIComponent(userData)}; path=/; max-age=2592000`;
 
-      const res = await signIn.email({
-        email: data.email,
-        password: data.password,
+      const response = await fetch("/api/auth/sign-in/email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: data.email, password: data.password }),
       });
 
-      if (res?.error) {
-        await fetch("/api/auth/sign-in/email", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: data.email, password: data.password }),
-        });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || "Invalid email or password");
       }
 
       toast.success("Welcome back!");
       router.push("/dashboard");
-    } catch {
-      toast.success("Welcome back!");
-      router.push("/dashboard");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to sign in. Please check your details.");
     } finally {
       setIsLoading(false);
     }

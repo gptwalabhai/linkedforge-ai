@@ -59,27 +59,23 @@ export default function SignupPage() {
     setIsLoading(true);
     try {
       const userData = JSON.stringify({ name: data.name, email: data.email });
-      document.cookie = `linkedforge_user_data=${encodeURIComponent(userData)}; path=/; max-age=604800`;
+      document.cookie = `linkedforge_user_data=${encodeURIComponent(userData)}; path=/; max-age=2592000`;
 
-      const res = await signUp.email({
-        email: data.email,
-        password: data.password,
-        name: data.name,
+      const response = await fetch("/api/auth/sign-up/email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: data.email, password: data.password, name: data.name }),
       });
 
-      if (res?.error) {
-        await fetch("/api/auth/sign-up/email", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: data.email, password: data.password, name: data.name }),
-        });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to create account");
       }
 
       toast.success("Account created successfully!");
       router.push("/dashboard");
-    } catch {
-      toast.success("Account created successfully!");
-      router.push("/dashboard");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to create account. Please try again.");
     } finally {
       setIsLoading(false);
     }

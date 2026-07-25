@@ -63,69 +63,64 @@ export async function getSession(): Promise<Session | null> {
     const { headers } = await import("next/headers");
     const heads = await headers();
     const cookieHeader = heads.get("cookie") || "";
-    const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    
+    // Extract sessionToken from cookie
+    const tokenMatch = cookieHeader.match(/linkedforge_session=([^;]+)/);
+    const token = tokenMatch ? tokenMatch[1] : null;
 
     // Extract user custom name and email from cookie if set during signup/login
     let customUser: { name?: string; email?: string } | null = null;
-    const match = cookieHeader.match(/linkedforge_user_data=([^;]+)/);
-    if (match) {
+    const userMatch = cookieHeader.match(/linkedforge_user_data=([^;]+)/);
+    if (userMatch) {
       try {
-        customUser = JSON.parse(decodeURIComponent(match[1]));
+        customUser = JSON.parse(decodeURIComponent(userMatch[1]));
       } catch {}
     }
 
-    try {
-      const request = new Request(`${baseUrl}/api/auth/get-session`, {
-        headers: heads,
-      });
-      const response = await auth.handler(request);
-      if (response.ok) {
-        const data = await response.json();
-        if (data?.user) {
-          return {
-            ...data,
-            user: {
-              ...data.user,
-              name: data.user.name && data.user.name !== "Demo User" ? data.user.name : (customUser?.name || data.user.name || data.user.email?.split("@")[0] || "User"),
-              email: data.user.email && data.user.email !== "demo@linkedforge.ai" ? data.user.email : (customUser?.email || data.user.email || "user@linkedforge.ai"),
-            },
-          } as Session;
-        }
+    // 1. Direct Prisma Database query if session token exists
+    if (token) {
+      const dbSession = await prisma.session.findUnique({
+        where: { sessionToken: token },
+        include: { user: true },
+      }).catch(() => null);
+
+      if (dbSession?.user) {
+        return {
+          user: dbSession.user,
+          session: dbSession,
+        } as any;
       }
-    } catch {
-      // Fall through to cookie check if DB query throws
     }
 
-    if (cookieHeader.includes("linkedforge_session") || customUser) {
-      const email = customUser?.email || "user@linkedforge.ai";
-      const name = customUser?.name || (email.includes("@") ? email.split("@")[0] : "User");
-      const userId = "usr_" + Buffer.from(email).toString("hex").substring(0, 12);
+    // 2. Query DB by email from cookie if available
+    if (customUser?.email) {
+      let dbUser = await prisma.user.findUnique({
+        where: { email: customUser.email },
+      }).catch(() => null);
 
-      return {
-        user: {
-          id: userId,
-          email,
-          name,
-          credits: 100,
-          role: "USER",
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          emailVerified: new Date(),
-          image: null,
-          brandVoice: null,
-          writingStyle: null,
-          industry: null,
-          jobTitle: null,
-          company: null,
-          timezone: "UTC",
-        },
-        session: {
-          id: "sess_" + userId,
-          userId,
-          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-          sessionToken: "linkedforge_session_token",
-        },
-      } as any;
+      if (!dbUser && customUser.email) {
+        // Create user in Neon PostgreSQL if missing
+        dbUser = await prisma.user.create({
+          data: {
+            name: customUser.name || customUser.email.split("@")[0] || "User",
+            email: customUser.email,
+            credits: 50,
+            role: "USER",
+          },
+        }).catch(() => null);
+      }
+
+      if (dbUser) {
+        return {
+          user: dbUser,
+          session: {
+            id: "sess_" + dbUser.id,
+            userId: dbUser.id,
+            expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            sessionToken: token || "session_token",
+          },
+        } as any;
+      }
     }
 
     return null;
