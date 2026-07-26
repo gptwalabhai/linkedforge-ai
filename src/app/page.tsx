@@ -8,6 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
+import { PorscheHero3D } from "@/components/landing/porsche-hero-3d";
 
 const painPoints = [
   {
@@ -195,8 +196,11 @@ export default function LandingPage() {
             </Link>
           </div>
 
+          {/* 3D Porsche Supercar Visualizer & Scroll Physics */}
+          <PorscheHero3D />
+
           {/* 3D Perspective Card Mockup Showcase */}
-          <div className="relative max-w-5xl mx-auto perspective-1000">
+          <div className="relative max-w-5xl mx-auto perspective-1000 mt-12">
             <div className="transform-3d animate-float-3d transition-all duration-700 hover:rotate-x-0">
               <div className="gradient-border p-1 shadow-2xl shadow-red-950/80">
                 <div className="rounded-2xl overflow-hidden bg-[#0c0c14] border border-red-900/30">
