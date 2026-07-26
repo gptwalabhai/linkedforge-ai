@@ -246,7 +246,7 @@ function AIStudioContent() {
           {/* Left Column: Form Configuration (7 cols) */}
           <div className="lg:col-span-7 space-y-6">
             {/* Format Selection */}
-            <Card className="border border-red-900/30 bg-[#0c0c14] shadow-xl">
+            <Card className="border border-red-900/30 stitch-card border border-red-900/30 rounded-2xl shadow-xl">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base text-white flex items-center gap-2">
                   <Flame className="w-4 h-4 text-red-500" /> Select Content Format
@@ -281,7 +281,7 @@ function AIStudioContent() {
             </Card>
 
             {/* Topic & Context Input */}
-            <Card className="border border-red-900/30 bg-[#0c0c14] shadow-xl">
+            <Card className="border border-red-900/30 stitch-card border border-red-900/30 rounded-2xl shadow-xl">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base text-white">Topic & Source Material *</CardTitle>
                 <CardDescription className="text-xs text-slate-400">
@@ -323,7 +323,7 @@ function AIStudioContent() {
             </Card>
 
             {/* Advanced Tone & Framework Settings */}
-            <Card className="border border-red-900/30 bg-[#0c0c14] shadow-xl">
+            <Card className="border border-red-900/30 stitch-card border border-red-900/30 rounded-2xl shadow-xl">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base text-white">Style & Copy Strategy</CardTitle>
                 <CardDescription className="text-xs text-slate-400">
@@ -430,7 +430,7 @@ function AIStudioContent() {
 
           {/* Right Column: Output & AI Transformations (5 cols) */}
           <div className="lg:col-span-5 space-y-6">
-            <Card className="border border-red-900/30 bg-[#0c0c14] shadow-2xl h-full flex flex-col min-h-[580px]">
+            <Card className="border border-red-900/30 stitch-card border border-red-900/30 rounded-2xl shadow-2xl h-full flex flex-col min-h-[580px]">
               <CardHeader className="pb-3 flex flex-row items-center justify-between border-b border-white/5">
                 <div>
                   <CardTitle className="text-base text-white flex items-center gap-2">

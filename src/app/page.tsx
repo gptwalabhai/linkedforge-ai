@@ -271,7 +271,7 @@ export default function LandingPage() {
 
           <div className="grid md:grid-cols-2 gap-6">
             {painPoints.map((item, idx) => (
-              <div key={idx} className="p-6 rounded-2xl bg-[#0c0c14] border border-red-900/20 hover:border-red-500/40 transition-all duration-300 space-y-4">
+              <div key={idx} className="p-6 rounded-2xl stitch-card border border-red-900/30 rounded-3xl hover:border-red-500/40 transition-all duration-300 space-y-4">
                 <div className="flex items-start gap-3 p-3 rounded-xl bg-red-950/30 border border-red-500/20 text-red-300 text-sm">
                   <XCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
                   <div>
@@ -304,7 +304,7 @@ export default function LandingPage() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((f, i) => (
-              <div key={i} className="group p-6 rounded-2xl bg-[#0c0c14] border border-red-900/20 hover:border-red-500/50 hover:bg-[#12121c] transition-all duration-300 hover:-translate-y-1.5 shadow-lg hover:shadow-red-950/50">
+              <div key={i} className="group p-6 rounded-2xl stitch-card border border-red-900/30 rounded-3xl hover:border-red-500/50 hover:bg-[#12121c] transition-all duration-300 hover:-translate-y-1.5 shadow-lg hover:shadow-red-950/50">
                 <div className="w-12 h-12 rounded-xl bg-red-950/80 border border-red-500/30 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
                   <f.icon className="w-6 h-6 text-red-500" />
                 </div>
