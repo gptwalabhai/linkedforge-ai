@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { Providers } from "@/components/providers";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   title: "LinkedForge AI - AI-powered LinkedIn Content Generator",
@@ -51,6 +52,7 @@ export default function RootLayout({
           {children}
           <Toaster richColors position="bottom-right" />
         </Providers>
+        <Analytics />
       </body>
     </html>
   );
